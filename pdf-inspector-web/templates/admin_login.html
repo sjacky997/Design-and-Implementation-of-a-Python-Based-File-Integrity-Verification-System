@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员登录</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #ffffff;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 45px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            max-width: 420px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header .icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #ffffff;
+            margin-bottom: 8px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            color: #a0aec0;
+            font-size: 13px;
+        }
+
+        .flash {
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            background: rgba(220, 53, 69, 0.15);
+            color: #fc8181;
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .flash.success {
+            background: rgba(40, 167, 69, 0.15);
+            color: #48bb78;
+            border: 1px solid rgba(40, 167, 69, 0.3);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            color: #e2e8f0;
+        }
+
+        input[type="password"] {
+            width: 100%;
+            padding: 13px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.25);
+            color: #ffffff;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            letter-spacing: 2px;
+        }
+
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #4f8cf7;
+            box-shadow: 0 0 0 3px rgba(79, 140, 247, 0.2);
+        }
+
+        input[type="password"]::placeholder {
+            color: #718096;
+            letter-spacing: normal;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #4f8cf7, #2c7be5);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, #5a97f8, #3a87eb);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(44, 123, 229, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #a0aec0;
+            text-decoration: none;
+            font-size: 13px;
+            transition: color 0.2s ease;
+        }
+
+        .back-link:hover {
+            color: #4f8cf7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="icon">🔐</div>
+            <h1>管理员登录</h1>
+            <p>请输入管理员密码以访问后台</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="flash {{ 'success' if category == 'success' else '' }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <form method="post">
+            <div class="form-group">
+                <label for="password">管理员密码</label>
+                <input type="password" name="password" id="password"
+                       placeholder="请输入密码" required autofocus autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn">登 录</button>
+        </form>
+
+        <a href="/" class="back-link">← 返回首页</a>
+    </div>
+</body>
+</html>

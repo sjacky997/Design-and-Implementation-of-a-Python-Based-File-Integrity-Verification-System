@@ -1,0 +1,8 @@
+{
+  "timestamp": "2026-10-02T01:37:47.468660",
+  "pdf_file": "contract_1.pdf",
+  "status": "clean",
+  "expected_hash": "3bb6e054ef5dbb1848a8c77be7c68d5e54c98854059b3a09819e8c02d419f2de",
+  "actual_hash": "3bb6e054ef5dbb1848a8c77be7c68d5e54c98854059b3a09819e8c02d419f2de",
+  "signature_of_report": "b8a2eb57af5a8477512bd40103e5ffc282ef39198e389b3a9040a94c465d0cf180520df6fb8158881916598990f72a836bd68a873f88235b250b1cdda67eca9a"
+}

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>录入成功</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px 20px;
+            color: #ffffff;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 45px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            max-width: 720px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .success-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+            animation: popIn 0.4s ease-out;
+        }
+
+        @keyframes popIn {
+            from {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        h1 {
+            color: #48bb78;
+            font-size: 24px;
+            margin-bottom: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(255, 193, 7, 0.2);
+            color: #f6ad55;
+            padding: 4px 14px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .detail {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 24px;
+            border-radius: 12px;
+            margin: 25px 0;
+            text-align: left;
+        }
+
+        .detail-row {
+            display: flex;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-row .label {
+            flex: 0 0 110px;
+            color: #a0aec0;
+            font-weight: 600;
+        }
+
+        .detail-row .value {
+            flex: 1;
+            color: #e2e8f0;
+            font-family: "Consolas", "Monaco", monospace;
+            word-break: break-all;
+        }
+
+        .detail-row .value.highlight {
+            color: #4f8cf7;
+            font-weight: 600;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .btn {
+            padding: 13px 28px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            letter-spacing: 0.5px;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4f8cf7, #2c7be5);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a97f8, #3a87eb);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(44, 123, 229, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            color: #e2e8f0;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <div class="success-icon">✅</div>
+        <h1>白名单录入成功</h1>
+        {% if overwritten %}
+        <span class="badge">已覆盖旧记录</span>
+        {% endif %}
+
+        <div class="detail">
+            <div class="detail-row">
+                <div class="label">合同编号</div>
+                <div class="value highlight">{{ contract_no }}</div>
+            </div>
+            <div class="detail-row">
+                <div class="label">原始文件名</div>
+                <div class="value">{{ original_filename }}</div>
+            </div>
+            <div class="detail-row">
+                <div class="label">SM3 哈希</div>
+                <div class="value">{{ pdf_hash }}</div>
+            </div>
+            <div class="detail-row">
+                <div class="label">录入时间</div>
+                <div class="value">{{ timestamp[:19] }}</div>
+            </div>
+            <div class="detail-row">
+                <div class="label">管理员 ID</div>
+                <div class="value">{{ admin_id }}</div>
+            </div>
+            <div class="detail-row">
+                <div class="label">SM2 签名</div>
+                <div class="value">{{ signature[:64] }}...</div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <a href="/admin/dashboard" class="btn btn-primary">返回面板</a>
+            <a href="/" class="btn btn-secondary">前往验证</a>
+        </div>
+
+    </div>
+</body>
+</html>

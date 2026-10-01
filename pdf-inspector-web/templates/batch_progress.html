@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>批量處理進度</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            color: #fff;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+        h1 { text-align: center; margin-bottom: 10px; font-size: 24px; }
+        .subtitle { text-align: center; color: #a0aec0; margin-bottom: 30px; font-size: 14px; }
+
+        .overall-progress {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        .progress-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 12px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4f8cf7, #2c7be5);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #a0aec0;
+        }
+
+        .task-list { margin-top: 20px; }
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 18px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #4a5568;
+            transition: all 0.3s ease;
+        }
+        .task-item.processing { border-left-color: #f6ad55; }
+        .task-item.success { border-left-color: #48bb78; }
+        .task-item.failed { border-left-color: #fc8181; }
+        .task-item.tampered { border-left-color: #fc8181; }
+        .task-item.clean { border-left-color: #48bb78; }
+
+        .task-icon {
+            font-size: 20px;
+            margin-right: 14px;
+            width: 24px;
+            text-align: center;
+        }
+        .task-info { flex: 1; }
+        .task-name { font-size: 14px; font-weight: 600; }
+        .task-status { font-size: 12px; color: #a0aec0; margin-top: 4px; }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #4f8cf7, #2c7be5);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 20px;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(44, 123, 229, 0.4); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .actions { text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⏳ 批量處理中</h1>
+        <p class="subtitle">
+            {% if operation == 'verify' %}
+                正在驗證 {{ file_info|length }} 份合同
+            {% else %}
+                正在錄入 {{ file_info|length }} 份合同
+            {% endif %}
+        </p>
+
+        <div class="overall-progress">
+            <div class="progress-text">
+                <span>總體進度</span>
+                <span id="progress-label">0 / {{ file_info|length }}</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+
+        <div class="task-list" id="task-list">
+            {% for info in file_info %}
+            <div class="task-item" id="task-{{ info.task_id }}">
+                <div class="task-icon">⏸️</div>
+                <div class="task-info">
+                    <div class="task-name">{{ info.filename }}</div>
+                    <div class="task-status">
+                        {% if operation == 'register' %}
+                            合同編號: {{ info.contract_no }}
+                        {% else %}
+                            等待處理...
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="actions">
+            <button class="btn" id="view-result-btn" disabled onclick="goToResult()">
+                查看匯總結果
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const taskIds = {{ task_ids|tojson }};
+        const operation = '{{ operation }}';
+        const total = taskIds.length;
+        let completed = 0;
+        const results = {};
+
+        async function pollStatus() {
+            try {
+                const response = await fetch('/api/batch_status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ task_ids: taskIds })
+                });
+                const data = await response.json();
+
+                data.tasks.forEach(task => {
+                    updateTaskUI(task);
+                });
+
+                // 更新總體進度
+                const doneCount = data.tasks.filter(t => t.ready).length;
+                completed = doneCount;
+                document.getElementById('progress-label').textContent = 
+                    `${doneCount} / ${total}`;
+                document.getElementById('progress-fill').style.width = 
+                    `${(doneCount / total) * 100}%`;
+
+                // 全部完成
+                if (doneCount === total) {
+                    document.getElementById('view-result-btn').disabled = false;
+                    clearInterval(pollTimer);
+                }
+            } catch (error) {
+                console.error('輪詢失敗:', error);
+            }
+        }
+
+        function updateTaskUI(task) {
+            const el = document.getElementById(`task-${task.task_id}`);
+            if (!el) return;
+
+            const icon = el.querySelector('.task-icon');
+            const status = el.querySelector('.task-status');
+
+            // 移除舊狀態
+            el.className = 'task-item';
+
+            if (task.state === 'PROCESSING') {
+                el.classList.add('processing');
+                icon.textContent = '⏳';
+                status.textContent = '處理中...';
+            } else if (task.ready) {
+                const result = task.result || {};
+                if (result.status === 'success') {
+                    el.classList.add('success');
+                    icon.textContent = '✅';
+                    status.textContent = `成功 | 哈希: ${(result.pdf_hash || '').slice(0, 16)}...`;
+                } else if (result.status === 'clean') {
+                    el.classList.add('clean');
+                    icon.textContent = '✅';
+                    status.textContent = '未篡改';
+                } else if (result.status === 'tampered') {
+                    el.classList.add('tampered');
+                    icon.textContent = '❌';
+                    status.textContent = '已篡改';
+                } else if (result.status === 'failed') {
+                    el.classList.add('failed');
+                    icon.textContent = '❌';
+                    status.textContent = `失敗: ${result.reason || '未知錯誤'}`;
+                }
+                results[task.task_id] = result;
+            } else {
+                icon.textContent = '⏸️';
+                status.textContent = '等待中...';
+            }
+        }
+
+        function goToResult() {
+            // 將結果存入 sessionStorage，供結果頁讀取
+            sessionStorage.setItem('batchResults', JSON.stringify(results));
+            sessionStorage.setItem('batchOperation', operation);
+            window.location.href = '/batch_result_page';
+        }
+
+        // 每1秒輪詢一次
+        const pollTimer = setInterval(pollStatus, 1000);
+        pollStatus();  // 立即執行一次
+    </script>
+</body>
+</html>

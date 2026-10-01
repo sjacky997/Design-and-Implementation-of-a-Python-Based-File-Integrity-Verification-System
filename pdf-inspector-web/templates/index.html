@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF 完整性檢測系統</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #ffffff;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            max-width: 700px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #ffffff;
+            margin-bottom: 8px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            color: #a0aec0;
+            font-size: 14px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #4f8cf7, #2c7be5);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .flash {
+            padding: 14px 18px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .flash.error {
+            background: rgba(220, 53, 69, 0.15);
+            color: #fc8181;
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+
+        .flash.success {
+            background: rgba(40, 167, 69, 0.15);
+            color: #48bb78;
+            border: 1px solid rgba(40, 167, 69, 0.3);
+        }
+
+        .form-group {
+            margin-bottom: 22px;
+        }
+
+        .form-group > label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #e2e8f0;
+        }
+
+        .form-group .hint {
+            font-size: 12px;
+            color: #718096;
+            margin-top: 6px;
+            line-height: 1.5;
+        }
+
+        input[type="file"],
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.25);
+            color: #ffffff;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        input[type="file"]::file-selector-button {
+            background: linear-gradient(135deg, #4f8cf7, #2c7be5);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            margin-right: 12px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        input[type="file"]::file-selector-button:hover {
+            background: linear-gradient(135deg, #5a97f8, #3a87eb);
+        }
+
+        input[type="file"]:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #4f8cf7;
+            box-shadow: 0 0 0 3px rgba(79, 140, 247, 0.2);
+        }
+
+        input::placeholder {
+            color: #718096;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .mode-option {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .mode-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .mode-card {
+            padding: 16px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+            height: 100%;
+        }
+
+        .mode-option input[type="radio"]:checked + .mode-card {
+            border-color: #4f8cf7;
+            background: rgba(79, 140, 247, 0.15);
+            box-shadow: 0 0 0 3px rgba(79, 140, 247, 0.15);
+        }
+
+        .mode-card:hover {
+            border-color: rgba(79, 140, 247, 0.5);
+        }
+
+        .mode-card .mode-title {
+            font-weight: 700;
+            font-size: 14px;
+            color: #ffffff;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .mode-card .mode-desc {
+            font-size: 12px;
+            color: #a0aec0;
+            line-height: 1.5;
+        }
+
+        .mode-card .mode-recommend {
+            display: inline-block;
+            background: rgba(72, 187, 120, 0.2);
+            color: #48bb78;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 8px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #4f8cf7, #2c7be5);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 10px;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, #5a97f8, #3a87eb);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(44, 123, 229, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer a {
+            color: #a0aec0;
+            text-decoration: none;
+            font-size: 13px;
+            transition: color 0.2s ease;
+        }
+
+        .footer a:hover {
+            color: #4f8cf7;
+        }
+
+        .server-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-bottom: 20px;
+        }
+
+        .server-status.ready {
+            background: rgba(40, 167, 69, 0.1);
+            color: #48bb78;
+            border: 1px solid rgba(40, 167, 69, 0.2);
+        }
+
+        .server-status.not-ready {
+            background: rgba(255, 193, 7, 0.1);
+            color: #f6ad55;
+            border: 1px solid rgba(255, 193, 7, 0.2);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .server-status.ready .status-dot {
+            background: #48bb78;
+            box-shadow: 0 0 8px #48bb78;
+        }
+
+        .server-status.not-ready .status-dot {
+            background: #f6ad55;
+            box-shadow: 0 0 8px #f6ad55;
+        }
+
+        .file-list {
+            margin-top: 8px;
+        }
+
+        .file-list-item {
+            font-size: 12px;
+            color: #a0aec0;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 標題區域 -->
+        <div class="header">
+            <h1>🔒 PDF 完整性檢測系統</h1>
+            <p>基於國密 SM2/SM3 的文件防篡改驗證平台</p>
+            <span class="badge">批量驗證 · 最多 5 份</span>
+        </div>
+
+        <!-- 伺服器簽名狀態 -->
+        {% if server_signer_ready %}
+        <div class="server-status ready">
+            <span class="status-dot"></span>
+            <span>伺服器已配置簽名私鑰，可直接使用「自動簽名」模式</span>
+        </div>
+        {% else %}
+        <div class="server-status not-ready">
+            <span class="status-dot"></span>
+            <span>伺服器未配置簽名私鑰，請使用「手動輸入」模式或聯繫管理員</span>
+        </div>
+        {% endif %}
+
+        <!-- Flash 消息 -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- 批量驗證表單 -->
+        <form action="/batch_verify" method="post" enctype="multipart/form-data">
+
+            <!-- 簽名模式 -->
+            <div class="form-group">
+                <label>🔐 簽名模式</label>
+                <div class="mode-selector">
+                    {% if server_signer_ready %}
+                    <label class="mode-option">
+                        <input type="radio" name="signer_mode" value="server" checked
+                               onchange="toggleKeyInput()">
+                        <div class="mode-card">
+                            <div class="mode-title">
+                                🖥️ 伺服器自動簽名
+                                <span class="mode-recommend">推薦</span>
+                            </div>
+                            <div class="mode-desc">
+                                私鑰加密存於伺服器，用戶無需接觸
+                            </div>
+                        </div>
+                    </label>
+                    {% endif %}
+
+                    <label class="mode-option">
+                        <input type="radio" name="signer_mode" value="manual"
+                               {% if not server_signer_ready %}checked{% endif %}
+                               onchange="toggleKeyInput()">
+                        <div class="mode-card">
+                            <div class="mode-title">🔑 手動輸入私鑰</div>
+                            <div class="mode-desc">
+                                臨時輸入 SM2 私鑰完成簽名
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- 批量上傳 PDF -->
+            <div class="form-group">
+                <label for="pdf_files">📄 待驗證的 PDF 文件（最多 {{ max_batch }} 份）</label>
+                <input type="file" name="pdf_files" id="pdf_files" accept=".pdf"
+                       multiple required onchange="checkFileCount(this, {{ max_batch }})">
+                <div class="hint">單批次最多 {{ max_batch }} 份，單文件最大 10MB</div>
+                <div class="file-list" id="file-list"></div>
+            </div>
+
+            <!-- 白名單（可選） -->
+            <div class="form-group">
+                <label for="whitelist_file">📋 白名單文件（可選）</label>
+                <input type="file" name="whitelist_file" id="whitelist_file" accept=".json">
+                <div class="hint">不上傳則使用系統內置白名單</div>
+            </div>
+
+            <!-- 私鑰輸入（僅手動模式顯示） -->
+            <div class="form-group" id="key_input_group" style="display:none;">
+                <label for="private_key">🔑 SM2 私鑰（64位十六進制）</label>
+                <input type="text" name="private_key" id="private_key"
+                       placeholder="請輸入64位十六進制私鑰"
+                       maxlength="64" autocomplete="off" spellcheck="false">
+                <div class="hint">⚠️ 私鑰僅用於本次簽名運算，伺服器不存儲該私鑰</div>
+            </div>
+
+            <button type="submit" class="btn">🚀 批量驗證</button>
+        </form>
+
+        <!-- 底部連結 -->
+        <div class="footer">
+            <a href="/admin/login">🔧 管理員入口</a>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * 根據簽名模式切換私鑰輸入框顯示
+         */
+        function toggleKeyInput() {
+            const selected = document.querySelector('input[name="signer_mode"]:checked');
+            if (!selected) return;
+
+            const mode = selected.value;
+            const keyGroup = document.getElementById('key_input_group');
+            const keyInput = document.getElementById('private_key');
+
+            if (mode === 'manual') {
+                keyGroup.style.display = 'block';
+                keyInput.required = true;
+            } else {
+                keyGroup.style.display = 'none';
+                keyInput.required = false;
+                keyInput.value = '';
+            }
+        }
+
+        /**
+         * 檢查上傳文件數量是否超過上限
+         */
+        function checkFileCount(input, max) {
+            const files = input.files;
+            const list = document.getElementById('file-list');
+            list.innerHTML = '';
+
+            if (files.length > max) {
+                alert(`單批次最多支持 ${max} 個文件，您選擇了 ${files.length} 個`);
+                input.value = '';
+                return;
+            }
+
+            for (const f of files) {
+                const item = document.createElement('div');
+                item.className = 'file-list-item';
+                item.textContent = `• ${f.name} (${(f.size / 1024).toFixed(1)} KB)`;
+                list.appendChild(item);
+            }
+        }
+
+        /**
+         * 頁面加載初始化
+         */
+        document.addEventListener('DOMContentLoaded', function () {
+            toggleKeyInput();
+
+            const keyInput = document.getElementById('private_key');
+            keyInput.addEventListener('input', function () {
+                // 只保留十六進制字符，限制 64 位
+                this.value = this.value.replace(/[^0-9a-fA-F]/g, '').slice(0, 64);
+            });
+        });
+    </script>
+</body>
+</html>
