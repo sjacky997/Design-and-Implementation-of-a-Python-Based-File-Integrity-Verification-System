@@ -1,4 +1,6 @@
-Flask==3.0.0
-gmssl==3.2.1
-pymupdf==1.24.0
-cryptography==42.0.0
+Flask
+gmssl
+pymupdf                  # ← 不指定版本
+cryptography
+filelock
+flask-limiter

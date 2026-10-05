@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用戶登錄 - PDF 完整性檢測系統</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #ffffff;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 45px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            max-width: 420px;
+            width: 100%;
+        }
+
+        .header { text-align: center; margin-bottom: 30px; }
+        .header .icon { font-size: 48px; margin-bottom: 12px; }
+        .header h1 { font-size: 24px; margin-bottom: 8px; font-weight: 700; }
+        .header p { color: #a0aec0; font-size: 13px; }
+
+        .flash {
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+        .flash.error {
+            background: rgba(220, 53, 69, 0.15);
+            color: #fc8181;
+            border: 1px solid rgba(220, 53, 69, 0.3);
+        }
+        .flash.success {
+            background: rgba(40, 167, 69, 0.15);
+            color: #48bb78;
+            border: 1px solid rgba(40, 167, 69, 0.3);
+        }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            color: #e2e8f0;
+        }
+
+        input[type="password"] {
+            width: 100%;
+            padding: 13px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.25);
+            color: #ffffff;
+            font-size: 14px;
+            letter-spacing: 2px;
+        }
+
+        input[type="password"]:focus {
+            outline: none;
+            border-color: #48bb78;
+            box-shadow: 0 0 0 3px rgba(72, 187, 120, 0.2);
+        }
+
+        input::placeholder { color: #718096; letter-spacing: normal; }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #48bb78, #38a169);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            letter-spacing: 1px;
+        }
+        .btn:hover {
+            background: linear-gradient(135deg, #56c98a, #43b879);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(72, 187, 120, 0.4);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer a {
+            color: #a0aec0;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        .footer a:hover { color: #48bb78; }
+
+        .hint {
+            font-size: 11px;
+            color: #718096;
+            margin-top: 6px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="icon">🔍</div>
+            <h1>驗證功能登錄</h1>
+            <p>請輸入驗證密碼以使用 PDF 驗證功能</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="flash {{ 'success' if category == 'success' else 'error' }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <form method="post">
+            <div class="form-group">
+                <label for="password">驗證密碼</label>
+                <input type="password" name="password" id="password"
+                       placeholder="請輸入驗證密碼" required autofocus
+                       autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn">登 錄</button>
+        </form>
+
+        <div class="hint">⚠️ 僅限授權的財務人員使用</div>
+
+        <div class="footer">
+            <a href="/portal">← 返回功能選擇</a>
+        </div>
+    </div>
+    <!-- 🆕 添加這段 -->
+    <script>
+        sessionStorage.setItem('verify_tab', 'active');
+    </script>
+</body>
+</html>

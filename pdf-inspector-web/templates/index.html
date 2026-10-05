@@ -34,6 +34,54 @@
             width: 100%;
         }
 
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            font-size: 13px;
+        }
+
+        .user-status {
+            display: flex;
+            align-items: center;
+            color: #48bb78;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #48bb78;
+            border-radius: 50%;
+            margin-right: 8px;
+            box-shadow: 0 0 8px #48bb78;
+        }
+
+        .top-bar-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .top-bar-btn {
+            color: #a0aec0;
+            text-decoration: none;
+            padding: 5px 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.2s ease;
+            font-size: 13px;
+        }
+
+        .top-bar-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+
         .header {
             text-align: center;
             margin-bottom: 30px;
@@ -68,6 +116,7 @@
             border-radius: 10px;
             margin-bottom: 20px;
             font-size: 14px;
+            animation: slideIn 0.3s ease-out;
         }
 
         .flash.error {
@@ -80,6 +129,11 @@
             background: rgba(40, 167, 69, 0.15);
             color: #48bb78;
             border: 1px solid rgba(40, 167, 69, 0.3);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .form-group {
@@ -230,24 +284,6 @@
             transform: translateY(0);
         }
 
-        .footer {
-            text-align: center;
-            margin-top: 25px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .footer a {
-            color: #a0aec0;
-            text-decoration: none;
-            font-size: 13px;
-            transition: color 0.2s ease;
-        }
-
-        .footer a:hover {
-            color: #4f8cf7;
-        }
-
         .server-status {
             display: flex;
             align-items: center;
@@ -270,7 +306,7 @@
             border: 1px solid rgba(255, 193, 7, 0.2);
         }
 
-        .status-dot {
+        .server-status .status-dot {
             width: 8px;
             height: 8px;
             border-radius: 50%;
@@ -297,13 +333,34 @@
             margin-top: 4px;
         }
     </style>
+
+    <!-- 🆕 檢查 sessionStorage，若為新分頁則強制登出 -->
+    <script>
+        (function() {
+            if (sessionStorage.getItem('verify_tab') !== 'active') {
+                window.location.replace('/force_logout');
+            }
+        })();
+    </script>
 </head>
 <body>
     <div class="container">
+
+        <!-- 頂部用戶信息欄（只保留登出按鈕） -->
+        <div class="top-bar">
+            <div class="user-status">
+                <span class="status-dot"></span>
+                驗證功能已登錄
+            </div>
+            <div class="top-bar-actions">
+                <a href="/logout" class="top-bar-btn">🚪 登出</a>
+            </div>
+        </div>
+
         <!-- 標題區域 -->
         <div class="header">
-            <h1>🔒 PDF 完整性檢測系統</h1>
-            <p>基於國密 SM2/SM3 的文件防篡改驗證平台</p>
+            <h1>🔍 PDF 完整性檢測</h1>
+            <p>基於國密 SM2/SM3 的文件防篡改驗證</p>
             <span class="badge">批量驗證 · 最多 5 份</span>
         </div>
 
@@ -394,16 +451,9 @@
             <button type="submit" class="btn">🚀 批量驗證</button>
         </form>
 
-        <!-- 底部連結 -->
-        <div class="footer">
-            <a href="/admin/login">🔧 管理員入口</a>
-        </div>
     </div>
 
     <script>
-        /**
-         * 根據簽名模式切換私鑰輸入框顯示
-         */
         function toggleKeyInput() {
             const selected = document.querySelector('input[name="signer_mode"]:checked');
             if (!selected) return;
@@ -422,9 +472,6 @@
             }
         }
 
-        /**
-         * 檢查上傳文件數量是否超過上限
-         */
         function checkFileCount(input, max) {
             const files = input.files;
             const list = document.getElementById('file-list');
@@ -444,15 +491,11 @@
             }
         }
 
-        /**
-         * 頁面加載初始化
-         */
         document.addEventListener('DOMContentLoaded', function () {
             toggleKeyInput();
 
             const keyInput = document.getElementById('private_key');
             keyInput.addEventListener('input', function () {
-                // 只保留十六進制字符，限制 64 位
                 this.value = this.value.replace(/[^0-9a-fA-F]/g, '').slice(0, 64);
             });
         });
