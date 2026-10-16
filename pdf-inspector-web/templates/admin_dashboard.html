@@ -182,8 +182,7 @@
             background: linear-gradient(135deg, #5a97f8, #3a87eb);
         }
 
-        input[type="file"]:focus,
-        input[type="text"]:focus {
+        input:focus {
             outline: none;
             border-color: #4f8cf7;
             box-shadow: 0 0 0 3px rgba(79, 140, 247, 0.2);
@@ -205,7 +204,6 @@
             border-radius: 10px;
             margin-bottom: 20px;
             font-size: 14px;
-            animation: slideIn 0.3s ease-out;
         }
 
         .flash.error {
@@ -220,12 +218,6 @@
             border: 1px solid rgba(40, 167, 69, 0.3);
         }
 
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* 批量文件列表 */
         .batch-list {
             margin-top: 12px;
         }
@@ -296,10 +288,6 @@
             font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 1px;
-        }
-
-        tbody tr {
-            transition: background 0.15s ease;
         }
 
         tbody tr:hover {
@@ -376,16 +364,24 @@
             display: block;
         }
     </style>
+
+    <!-- 🆕 檢查 sessionStorage，若為新分頁則強制登出 -->
+    <script>
+        (function() {
+            if (sessionStorage.getItem('admin_tab') !== 'active') {
+                window.location.replace('/force_admin_logout');
+            }
+        })();
+    </script>
 </head>
 <body>
     <div class="container">
 
-        <!-- 頂部欄 -->
+        <!-- 頂部欄（已移除「首頁」按鈕） -->
         <div class="top-bar">
             <h1>⚙️ 管理員面板 · 白名單管理</h1>
             <div class="actions">
                 <a href="/admin/download_whitelist" class="btn btn-secondary">📥 下載白名單</a>
-                <a href="/" class="btn btn-secondary">🏠 首頁</a>
                 <a href="/admin/logout" class="btn btn-secondary">登出</a>
             </div>
         </div>
@@ -403,8 +399,8 @@
 
             <!-- 標籤切換：單文件 / 批量 -->
             <div class="tabs">
-                <div class="tab active" onclick="switchTab('single')">單文件錄入</div>
-                <div class="tab" onclick="switchTab('batch')">批量錄入（最多 {{ max_batch }} 份）</div>
+                <div class="tab active" onclick="switchTab(event, 'single')">單文件錄入</div>
+                <div class="tab" onclick="switchTab(event, 'batch')">批量錄入（最多 {{ max_batch }} 份）</div>
             </div>
 
             <!-- ========== 單文件錄入 ========== -->
@@ -451,7 +447,6 @@
                         </div>
                     </div>
 
-                    <!-- 動態生成的文件列表 + 編號輸入 -->
                     <div class="batch-list" id="batch-list"></div>
 
                     <button type="submit" class="btn btn-success" id="batch-submit-btn" disabled>
@@ -515,10 +510,7 @@
     <script>
         const MAX_BATCH = {{ max_batch }};
 
-        /**
-         * 切換標籤
-         */
-        function switchTab(tabName) {
+        function switchTab(event, tabName) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
 
@@ -526,16 +518,12 @@
             document.getElementById('tab-' + tabName).classList.add('active');
         }
 
-        /**
-         * 處理批量文件選擇
-         */
         function handleBatchFiles(input) {
             const files = Array.from(input.files);
             const list = document.getElementById('batch-list');
             const counter = document.getElementById('batch-counter');
             const submitBtn = document.getElementById('batch-submit-btn');
 
-            // 檢查數量上限
             if (files.length > MAX_BATCH) {
                 alert(`單批次最多支持 ${MAX_BATCH} 個文件，您選擇了 ${files.length} 個`);
                 input.value = '';
@@ -545,10 +533,7 @@
                 return;
             }
 
-            // 更新計數器
             counter.textContent = `${files.length} / ${MAX_BATCH}`;
-
-            // 清空並重建列表
             list.innerHTML = '';
 
             if (files.length === 0) {
@@ -556,28 +541,24 @@
                 return;
             }
 
-            // 為每個文件生成一行：文件名 + 合同編號輸入框
             files.forEach((file, index) => {
                 const item = document.createElement('div');
                 item.className = 'batch-item';
 
-                // 文件名
                 const nameSpan = document.createElement('span');
                 nameSpan.className = 'file-name';
                 nameSpan.textContent = `${index + 1}. ${file.name}`;
 
-                // 文件大小
                 const sizeSpan = document.createElement('span');
                 sizeSpan.className = 'file-size';
                 sizeSpan.textContent = `${(file.size / 1024).toFixed(1)} KB`;
 
-                // 合同編號輸入框
                 const inputEl = document.createElement('input');
                 inputEl.type = 'text';
                 inputEl.name = 'contract_nos';
                 inputEl.placeholder = '合同編號';
                 inputEl.required = true;
-                inputEl.value = file.name.replace(/\.pdf$/i, '');  // 默認用文件名
+                inputEl.value = file.name.replace(/\.pdf$/i, '');
 
                 item.appendChild(nameSpan);
                 item.appendChild(sizeSpan);
@@ -588,9 +569,6 @@
             submitBtn.disabled = false;
         }
 
-        /**
-         * 提交前驗證
-         */
         function validateBatch() {
             const inputs = document.querySelectorAll('input[name="contract_nos"]');
             const values = new Set();
